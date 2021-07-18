@@ -1,0 +1,33 @@
+{
+    "All features": "column name within your .csv file",
+    "Study ID": "study_id",
+
+    "IHE Model features": "column name within your .csv file",
+    "Log-transformed initial ICH volume": "log_ich_volume",
+    "Log-transformed hours from LKW to hospital arrival": "log_lkw_hct1",
+    "Warfarin Use": "anticoag_home___1",
+    "FXa inhibitor use": "xa_inhib",
+    "CTA spot sign": "ich_spotsign",
+    "Other Coagulopathy": "other_coag",
+    "Single Antiplatelet": "one_antiplatelet_use",
+    "Double Antiplatelet": "two_antiplatelet_use",
+    "Systolic BP on Arrival": "arrival_sbp",
+    "IHE": "inefficient_hemo",
+
+    "Poor Outcome Model features": "column name within your .csv file",
+    "Log-transformed Age": "log_age",
+    "Initial GCS Score: 5-12": "gcs_initial1",
+    "Initial GCS Score: 3-4": "gcs_initial2",
+    "IVH": "ivh",
+    "Poor Outcome at 3 months": "binary_mrs_3m",
+
+    "Features for ANNEXA-4-comparable cohort extraction": "column name within your .csv file",
+    "Initial ICH Volume": "ich_volume",
+    "Initial GCS Score: 13-15": "gcs_initial0",
+    "Hours from LKW to hospital arrival": "lkw_hct1",
+    "CMO/WLST at admission": "CMO",
+    "CMO/WLST at any time of hospital stay": "CMO_all",
+    "Discharged to Hospice": "discharged_to_hospice",
+    "mRS at Discharge": "mrs_discharge"
+
+}
