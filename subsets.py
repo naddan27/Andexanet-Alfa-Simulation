@@ -140,3 +140,30 @@ def get_higher_likelihood_of_favorable_outcome_in_ANNEXA4_cohort(df, feature_dic
     
     included.reset_index(inplace = True, drop = True)
     return included
+
+def get_high_ICH_volume_low_GCS_cohort(df, feature_dictionary):
+    """
+    Get subset of patients who are ANNEXA-4 ineligible because of high initial
+    ICH volume and low initial GCS score
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Dataframe comprising the entire data
+    feature_dictionary : dict
+        Dictionary where keys are the full names of the feature and the values
+        are the feature names saved in the csv file
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data of of the patients with initial ICH volumes > 60cc and/or initial 
+        GCS score 3-4
+    """
+    inclusion_criteria1 = df[feature_dictionary["Initial ICH Volume"]] >= 60
+    inclusion_criteria2 = df[feature_dictionary["Initial GCS Score: 3-4"]] == 1
+    either_or_num = (inclusion_criteria1*1) + (inclusion_criteria2*1)
+    either_or_true = either_or_num > 0
+    subset = df[either_or_true].copy()
+
+    return subset

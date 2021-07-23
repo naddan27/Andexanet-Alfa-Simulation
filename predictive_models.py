@@ -2,11 +2,12 @@ from sklearn.linear_model import LogisticRegression
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import roc_auc_score, average_precision_score, roc_curve, auc
-import copy
+from sklearn.metrics import roc_curve, auc
 import random
 import matplotlib.pyplot as plt
 import smote_variants
+import json
+
 
 class Predictive_Model(LogisticRegression):
     """
@@ -66,12 +67,12 @@ class Predictive_Model(LogisticRegression):
         """
         super().__init__(random_state = random_state)
         self.feature_names = feature_names
+        self.feature_full_name = []
         self.outcome_name = outcome_name
         self.train_data = train_data
         self.smote = smote
         self.smote_proportion = smote_proportion
         self.smote_function = smote_variants.ProWSyn
-    
         self.X, self.y = train_data[feature_names], train_data[outcome_name]
         
         if smote == False:
@@ -174,16 +175,26 @@ class Predictive_Model(LogisticRegression):
 
         return round(cv_auroc, roundTo), mean_fpr, mean_tpr
 
+    def get_coefficients(self):
+        coeff_df = pd.DataFrame()
+        
+        coeff_df["Feature Name"] = self.feature_full_name[:-1] + ['Cons']
+        coeff_df['Column Name'] = self.feature_names + ['Cons']
+        
+        coef = self.coef_.flatten().tolist()
+        coef.append(self.intercept_[0])
+        coeff_df['Coefficients'] = coef
+        
+        coeff_df['Odds Ratio'] = np.exp(coef)
+        
+        return coeff_df
+
 class IHE_Model(Predictive_Model):
     """
     Class to build a model to predict for inadequate hemostatic efficacy (IHE)
 
     Attributes
     ----------
-    ihe_feature_names : list
-        List of column names to extract for features to use in the model
-    ihe_outcome_name : str 
-        Name of the column to extract as the outcome to use in the model
     train_data : pandas.DataFrame
         The data that will be used to train the model
     smote : Boolean
@@ -197,14 +208,10 @@ class IHE_Model(Predictive_Model):
         The seed used when fixing the Logistic Regression model training and
         smote
     """
-    def __init__(self, ihe_feature_names, ihe_outcome_name, train_data, smote = False, smote_proportion = 1.0, random_state = 0):
+    def __init__(self, train_data, smote = True, smote_proportion = 1.0, random_state = 0):
         """
         Parameters
         ----------
-        ihe_feature_names : list
-            List of column names to extract for features to use in the model
-        ihe_outcome_name : str 
-            Name of the column to extract as the outcome to use in the model
         train_data : pandas.DataFrame
             The data that will be used to train the model
         smote : Boolean
@@ -218,9 +225,10 @@ class IHE_Model(Predictive_Model):
             The seed used when fixing the Logistic Regression model training and
             smote
         """
-        super().__init__(ihe_feature_names, ihe_outcome_name, train_data, smote = smote, smote_proportion = smote_proportion, random_state = random_state)
-        self.ihe_feature_names = self.feature_names
-        self.ihe_outcome_name = self.outcome_name
+        feature_dictionary = json.load(open("./variable_names.json", mode="r"))
+        ihe_feature_names, ihe_full_names = _pull_ihe_features_from_json(feature_dictionary)
+        super().__init__(ihe_feature_names[:-1], ihe_feature_names[-1], train_data, smote = smote, smote_proportion = smote_proportion, random_state = random_state)
+        self.feature_full_name = ihe_full_names
 
 class Poor_Outcome_Model(Predictive_Model):
     """
@@ -228,22 +236,29 @@ class Poor_Outcome_Model(Predictive_Model):
 
     Attributes
     ----------
-    mrs_feature_names : list
-        List of column names to extract for features to use in the model
-    mrs_outcome_name : str 
-        Name of the column to extract as the outcome to use in the model
     train_data : pandas.DataFrame
         The data that will be used to train the model
     random_state : float
         The seed used when fixing the Logistic Regression model training and
         smote
     """
-    def __init__(self, mrs_feature_names, mrs_outcome_name, train_data, random_state=0):
-        super().__init__(mrs_feature_names, mrs_outcome_name, train_data, smote = False, smote_proportion = None, random_state = random_state)
-        self.mrs_feature_names = self.feature_names
-        self.mrs_outcome_name = self.outcome_name
+    def __init__(self, train_data, random_state=0):
+        """
+        Parameters
+        ----------
+        train_data : pandas.DataFrame
+            The data that will be used to train the model
+        random_state : float
+            The seed used when fixing the Logistic Regression model training and
+            smote
+        """
+        feature_dictionary = json.load(open("./variable_names.json", mode="r"))
+        feature_names, feature_full_name = _pull_outcome_features_from_json(feature_dictionary)
+        super().__init__(feature_names[:-1], feature_names[-1], train_data, smote = False, smote_proportion = None, random_state = random_state)
+        self.feature_full_name = feature_full_name
+        self.ihe_probability_feature = feature_dictionary["Probability for IHE"]
 
-def pull_ihe_features_from_json(feature_dictionary):
+def _pull_ihe_features_from_json(feature_dictionary):
     """
     Gets the feature names of the IHE model that are saved in the CSV file and
     what those feature names represents. The last element represents the outcome
@@ -289,7 +304,7 @@ def pull_ihe_features_from_json(feature_dictionary):
     ]
     return feature_names_csv, feature_names_full
 
-def pull_outcome_features_from_json(feature_dictionary):
+def _pull_outcome_features_from_json(feature_dictionary):
     """
     Gets the feature names of the outcome model that are saved in the CSV file
     and what those feature names represents. The last element represents the outcome
@@ -310,16 +325,6 @@ def pull_outcome_features_from_json(feature_dictionary):
     str
         Name of the IHE probability name to use
     """
-    ihe_probability_csv_name = "ihe_probability"
-    feature_names_csv = [
-        feature_dictionary["Log-transformed Age"],
-        feature_dictionary["Log-transformed initial ICH volume"],
-        feature_dictionary["Initial GCS Score: 5-12"],
-        feature_dictionary["Initial GCS Score: 3-4"],
-        feature_dictionary["IVH"],
-        ihe_probability_csv_name,
-        feature_dictionary["Poor Outcome at 3 months"]
-    ]
 
     feature_names_full = [
         "Log-transformed Age",
@@ -331,4 +336,6 @@ def pull_outcome_features_from_json(feature_dictionary):
         "Poor Outcome at 3 months"
     ]
 
-    return feature_names_csv, feature_names_full, ihe_probability_csv_name
+    feature_names_csv = [feature_dictionary[k] for k in feature_names_full]
+
+    return feature_names_csv, feature_names_full,

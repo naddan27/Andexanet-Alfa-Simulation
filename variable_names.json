@@ -1,6 +1,7 @@
 {
     "All features": "column name within your .csv file",
     "Study ID": "study_id",
+    "Andexanet alfa cost ($)": 24750,
 
     "IHE Model features": "column name within your .csv file",
     "Log-transformed initial ICH volume": "log_ich_volume",
@@ -15,6 +16,7 @@
     "IHE": "inefficient_hemo",
 
     "Poor Outcome Model features": "column name within your .csv file",
+    "Probability for IHE": "ihe_probability",
     "Log-transformed Age": "log_age",
     "Initial GCS Score: 5-12": "gcs_initial1",
     "Initial GCS Score: 3-4": "gcs_initial2",
